@@ -83,18 +83,18 @@ export default function AdminPage() {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('/api/admin/results', {
+      const response = await fetch('/api/admin/auth', {
         credentials: 'include'
       })
       
-      if (response.status === 401) {
-        setAuth({ isAuthenticated: false, isLoading: false })
-      } else if (response.ok) {
-        setAuth({ isAuthenticated: true, isLoading: false })
+      if (response.ok) {
+        const data = await response.json()
+        setAuth({ isAuthenticated: data.isAuthenticated, isLoading: false })
       } else {
         setAuth({ isAuthenticated: false, isLoading: false })
       }
     } catch (error) {
+      console.error('Auth check error:', error)
       setAuth({ isAuthenticated: false, isLoading: false })
     }
   }
@@ -104,21 +104,26 @@ export default function AdminPage() {
     if (!adminKey.trim()) return
 
     try {
-      // Set admin key cookie
-      document.cookie = `admin_key=${adminKey}; path=/; max-age=31536000; samesite=lax`
-      
-      // Test authentication
-      const response = await fetch('/api/admin/results', {
-        credentials: 'include'
+      // Use server-side API to set admin cookie
+      const authResponse = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ adminKey })
       })
       
-      if (response.ok) {
+      if (authResponse.ok) {
         setAuth({ isAuthenticated: true, isLoading: false })
         setAdminKey('')
       } else {
-        alert('Invalid admin key')
+        const errorData = await authResponse.json()
+        console.error('Admin auth failed:', authResponse.status, errorData)
+        alert(`Invalid admin key: ${errorData.error || 'Authentication failed'}`)
       }
     } catch (error) {
+      console.error('Admin auth error:', error)
       alert('Error authenticating')
     }
   }
