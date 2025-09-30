@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Poll {
+  id        Int      @id @default(1)
+  isOpen    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  votes     Vote[]
+}
+
+model Vote {
+  id        Int      @id @default(autoincrement())
+  pollId    Int
+  option    Int
+  voterHash String
+  createdAt DateTime @default(now())
+
+  poll Poll @relation(fields: [pollId], references: [id])
+
+  @@unique([pollId, voterHash])
+}
