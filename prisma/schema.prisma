@@ -26,3 +26,25 @@ model Vote {
 
   @@unique([pollId, voterHash])
 }
+
+model DeviceBinding {
+  id          Int      @id @default(autoincrement())
+  pollId      Int
+  dbt         String   @unique   // device-bound token (UUID)
+  status      String   @default("ACTIVE") // ACTIVE, VOTED, DISABLED
+  deviceHash  String?           // fingerprint hash (nullable initially)
+  webauthnId  String?           // credential id, if enrolled
+  votedAt     DateTime?         // set upon successful vote
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([pollId])
+}
+
+model FingerprintBlock {
+  id         Int      @id @default(autoincrement())
+  pollId     Int
+  deviceHash String
+  createdAt  DateTime @default(now())
+  @@unique([pollId, deviceHash])
+}

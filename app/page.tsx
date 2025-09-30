@@ -5,6 +5,8 @@ import { Check, Lock, Clock } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { DevicePersistence } from '@/lib/device-persistence'
+import { collectClientFingerprintData } from '@/lib/fingerprint'
 
 interface PollStatus {
   isOpen: boolean
@@ -28,11 +30,68 @@ export default function VotingPage() {
   const [pollStatus, setPollStatus] = useState<PollStatus>({ isOpen: true })
   const [voteState, setVoteState] = useState<VoteState>({ status: 'loading' })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [dbt, setDbt] = useState<string | null>(null)
 
   useEffect(() => {
+    initializeDevice()
     checkPollStatus()
-    checkVoteStatus()
   }, [])
+
+  const initializeDevice = async () => {
+    try {
+      // Try to recover existing DBT
+      let recoveredDbt = await DevicePersistence.recoverDbt()
+      
+      if (!recoveredDbt) {
+        // Bootstrap new device
+        const response = await fetch('/api/device/bootstrap')
+        const data = await response.json()
+        recoveredDbt = data.dbt
+        
+        // Store DBT across all storage mechanisms
+        await DevicePersistence.storeDbt(recoveredDbt || '')
+      }
+      
+      setDbt(recoveredDbt)
+      
+      // Check if already voted on client side
+      const clientHasVoted = DevicePersistence.hasVoted()
+      
+      if (clientHasVoted) {
+        // Verify with server if we actually voted
+        try {
+          const testResponse = await fetch('/api/vote', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              option: 1, // Dummy option for test
+              dbt: recoveredDbt,
+              fingerprintData: collectClientFingerprintData()
+            }),
+          })
+          
+          if (testResponse.status === 409) {
+            // Server confirms we voted
+            setVoteState({ status: 'already_voted' })
+          } else {
+            // Server says we haven't voted, clear client state
+            DevicePersistence.clearVotedState()
+            setVoteState({ status: 'voting' })
+          }
+        } catch (error) {
+          // If verification fails, trust client state
+          setVoteState({ status: 'already_voted' })
+        }
+      } else {
+        setVoteState({ status: 'voting' })
+      }
+    } catch (error) {
+      console.error('Error initializing device:', error)
+      setVoteState({ status: 'error', message: 'Failed to initialize device' })
+    }
+  }
 
   const checkPollStatus = async () => {
     try {
@@ -44,18 +103,8 @@ export default function VotingPage() {
     }
   }
 
-  const checkVoteStatus = () => {
-    // Check if user has already voted (cookie-based)
-    const hasVoted = document.cookie.includes('era_poll_voted=1')
-    if (hasVoted) {
-      setVoteState({ status: 'already_voted' })
-    } else {
-      setVoteState({ status: 'voting' })
-    }
-  }
-
   const handleVote = async (option: number) => {
-    if (!pollStatus.isOpen || voteState.status !== 'voting' || isSubmitting) {
+    if (!pollStatus.isOpen || voteState.status !== 'voting' || isSubmitting || !dbt) {
       return
     }
 
@@ -63,15 +112,24 @@ export default function VotingPage() {
     setVoteState({ status: 'loading' })
 
     try {
+      // Collect device fingerprint data
+      const fingerprintData = collectClientFingerprintData()
+      
       const response = await fetch('/api/vote', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ option }),
+        body: JSON.stringify({ 
+          option, 
+          dbt,
+          fingerprintData 
+        }),
       })
 
       if (response.status === 201) {
+        // Mark as voted in client storage
+        DevicePersistence.markAsVoted()
         setVoteState({ status: 'voted' })
       } else if (response.status === 409) {
         setVoteState({ status: 'already_voted' })
