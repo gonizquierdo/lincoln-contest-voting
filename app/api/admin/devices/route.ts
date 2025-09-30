@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getRateLimitStatus } from '@/lib/rate-limit'
 import { getClientIp } from '@/lib/ip'
+import { DeviceBinding } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     const rateLimitStatus = getRateLimitStatus(currentIp)
     
     return NextResponse.json({
-      devices: devices.map(device => ({
+      devices: devices.map((device: DeviceBinding) => ({
         id: device.id,
         dbt: device.dbt.substring(0, 8) + '...', // Truncate for privacy
         status: device.status,
