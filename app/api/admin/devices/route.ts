@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getRateLimitStatus } from '@/lib/rate-limit'
 import { getClientIp } from '@/lib/ip'
-import { DeviceBinding } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,7 +34,7 @@ export async function GET(request: NextRequest) {
     const rateLimitStatus = getRateLimitStatus(currentIp)
     
     return NextResponse.json({
-      devices: devices.map((device: DeviceBinding) => ({
+      devices: devices.map((device: any) => ({
         id: device.id,
         dbt: device.dbt.substring(0, 8) + '...', // Truncate for privacy
         status: device.status,
@@ -45,11 +44,11 @@ export async function GET(request: NextRequest) {
       })),
       stats: {
         totalDevices: devices.length,
-        votedDevices: devices.filter(d => d.votedAt).length,
+        votedDevices: devices.filter((d: any) => d.votedAt).length,
         fingerprintBlocks,
         rateLimitStatus
       },
-      votesByHour: votesByHour.map(v => ({
+      votesByHour: votesByHour.map((v: any) => ({
         hour: new Date(v.createdAt).getHours(),
         count: v._count
       }))
@@ -89,7 +88,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Reset device binding
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: any) => {
         // Reset device binding
         await tx.deviceBinding.update({
           where: { id: deviceBinding.id },
