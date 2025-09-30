@@ -207,10 +207,10 @@ export default function VotingPage() {
       </div>
       <div className="space-y-2">
         <CardTitle className="text-3xl text-primary">
-          ¡Gracias por votar!
+          Thank you for voting!
         </CardTitle>
         <CardDescription className="text-lg">
-          Tu voto fue registrado exitosamente.
+          Your vote was successfully recorded.
         </CardDescription>
       </div>
     </div>
@@ -223,10 +223,10 @@ export default function VotingPage() {
       </div>
       <div className="space-y-2">
         <CardTitle className="text-3xl text-primary">
-          Ya votaste
+          You already voted
         </CardTitle>
         <CardDescription className="text-lg">
-          Solo se permite un voto por persona.
+          Only one vote per person is allowed.
         </CardDescription>
       </div>
     </div>
@@ -239,10 +239,10 @@ export default function VotingPage() {
       </div>
       <div className="space-y-2">
         <CardTitle className="text-3xl text-primary">
-          Votación cerrada
+          Voting closed
         </CardTitle>
         <CardDescription className="text-lg">
-          La votación no está disponible en este momento.
+          Voting is not available at this time.
         </CardDescription>
       </div>
     </div>
@@ -259,14 +259,14 @@ export default function VotingPage() {
             Error
           </CardTitle>
           <CardDescription className="text-lg">
-            {voteState.message || 'Ocurrió un error inesperado.'}
+            {voteState.message || 'An unexpected error occurred.'}
           </CardDescription>
         </div>
         <Button 
           onClick={() => setVoteState({ status: 'voting' })}
           size="lg"
         >
-          Intentar de nuevo
+          Try again
         </Button>
       </div>
     </div>
@@ -278,7 +278,7 @@ export default function VotingPage() {
         return (
           <div className="text-center space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <CardDescription className="text-lg">Cargando...</CardDescription>
+            <CardDescription className="text-lg">Loading...</CardDescription>
           </div>
         )
       case 'voted':
