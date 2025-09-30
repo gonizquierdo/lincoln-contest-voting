@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "npx prisma generate && next build --turbopack",
     "start": "next start",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
