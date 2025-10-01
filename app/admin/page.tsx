@@ -70,16 +70,20 @@ export default function AdminPage() {
   const [isResettingDevice, setIsResettingDevice] = useState(false)
   const [resetDbt, setResetDbt] = useState('')
   const [resetReason, setResetReason] = useState('')
+  const [autoRefresh, setAutoRefresh] = useState(true)
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
 
   useEffect(() => {
     checkAuth()
     if (auth.isAuthenticated) {
       fetchData()
-      // Auto-refresh every 3 seconds
-      const interval = setInterval(fetchData, 3000)
-      return () => clearInterval(interval)
+      // Auto-refresh every 15 seconds (reduced from 3s to save backend resources)
+      if (autoRefresh) {
+        const interval = setInterval(fetchData, 15000)
+        return () => clearInterval(interval)
+      }
     }
-  }, [auth.isAuthenticated])
+  }, [auth.isAuthenticated, autoRefresh])
 
   const checkAuth = async () => {
     try {
@@ -152,6 +156,8 @@ export default function AdminPage() {
         const devicesData = await devicesResponse.json()
         setDeviceData(devicesData)
       }
+
+      setLastUpdate(new Date())
     } catch (error) {
       console.error('Error fetching data:', error)
     }
@@ -387,13 +393,13 @@ export default function AdminPage() {
             <CardTitle className="text-2xl sm:text-3xl text-primary-foreground">Admin Panel</CardTitle>
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <Button
-                onClick={copyResults}
+                onClick={() => setAutoRefresh(!autoRefresh)}
                 variant="secondary"
                 size="sm"
-                className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+                className={`bg-primary-foreground text-primary hover:bg-primary-foreground/90 ${!autoRefresh ? 'opacity-60' : ''}`}
               >
-                <Copy className="w-4 h-4" />
-                Copy JSON
+                {autoRefresh ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                {autoRefresh ? 'Pause' : 'Resume'}
               </Button>
               <Button
                 onClick={fetchData}
@@ -403,6 +409,15 @@ export default function AdminPage() {
               >
                 <RefreshCw className="w-4 h-4" />
                 Refresh
+              </Button>
+              <Button
+                onClick={copyResults}
+                variant="secondary"
+                size="sm"
+                className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+              >
+                <Copy className="w-4 h-4" />
+                Copy JSON
               </Button>
               <Button
                 onClick={clearAllVotes}
@@ -501,9 +516,16 @@ export default function AdminPage() {
                 <span className="text-2xl font-bold">{results.total}</span>
                 <span className="ml-2 text-sm">Total Votes</span>
               </Badge>
-              <CardDescription className="text-sm">
-                Last updated: {new Date().toLocaleTimeString()}
-              </CardDescription>
+              <div className="text-sm">
+                <CardDescription className="text-sm">
+                  Last updated: {lastUpdate.toLocaleTimeString()}
+                </CardDescription>
+                {autoRefresh && (
+                  <CardDescription className="text-xs text-muted-foreground/70">
+                    Auto-refresh: 15s
+                  </CardDescription>
+                )}
+              </div>
             </div>
           </div>
         </CardHeader>

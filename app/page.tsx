@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Check, Lock, Clock } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -300,6 +301,16 @@ export default function VotingPage() {
       <div className="w-full max-w-6xl">
         <Card>
           <CardContent className="p-8">
+            <div className="flex justify-center mb-8">
+              <Image 
+                src="/images/logo_english_dep.jpeg"
+                alt="Lincoln College English Department Logo"
+                width={400}
+                height={150}
+                priority
+                className="object-contain"
+              />
+            </div>
             {renderContent()}
           </CardContent>
         </Card>
