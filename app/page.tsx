@@ -157,7 +157,7 @@ export default function VotingPage() {
     <div className="space-y-8">
       <div className="text-center space-y-4">
         <CardTitle className="text-3xl sm:text-4xl text-primary">
-          Vote your favorite era
+          Vote your favourite decade
         </CardTitle>
         <CardDescription className="text-base sm:text-lg">
           Choose the decade that resonates most with you
